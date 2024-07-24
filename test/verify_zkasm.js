@@ -44,6 +44,8 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
     let verifyPilConfig = pilVerification instanceof Object ? pilVerification : {};
     const pilFile = verifyPilConfig.pilFile || "pil/main.pil"
 
+    console.log("pilFile", pilFile);
+
     const pil = await compile(Fr, pilFile, null, pilConfig);
 
     if (pilConfig.defines && pilConfig.defines.N) {

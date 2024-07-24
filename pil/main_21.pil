@@ -6,10 +6,8 @@ namespace Main(%N);
 
     lJmpnCondValue in Global.STEP;
 
-    pol commit hJmpnCondValueBit[13];
+    pol commit hJmpnCondValueBit[11];
 
-    hJmpnCondValueBit[12] * (1-hJmpnCondValueBit[12]) = 0;
-    hJmpnCondValueBit[11] * (1-hJmpnCondValueBit[11]) = 0;
     hJmpnCondValueBit[10] * (1-hJmpnCondValueBit[10]) = 0;
     hJmpnCondValueBit[9] * (1-hJmpnCondValueBit[9]) = 0;
     hJmpnCondValueBit[8] * (1-hJmpnCondValueBit[8]) = 0;
@@ -22,7 +20,6 @@ namespace Main(%N);
     hJmpnCondValueBit[1] * (1-hJmpnCondValueBit[1]) = 0;
     hJmpnCondValueBit[0] * (1-hJmpnCondValueBit[0]) = 0;
 
-    jmpnCondValue = 2**31*hJmpnCondValueBit[12] + 2**30*hJmpnCondValueBit[11] + 2**29*hJmpnCondValueBit[10] + 2**28*hJmpnCondValueBit[9] +
-                    2**27*hJmpnCondValueBit[8] + 2**26*hJmpnCondValueBit[7] + 2**25*hJmpnCondValueBit[6] + 2**24*hJmpnCondValueBit[5] +
-                    2**23*hJmpnCondValueBit[4] + 2**22*hJmpnCondValueBit[3] + 2**21*hJmpnCondValueBit[2] + 2**20*hJmpnCondValueBit[1] + 
-                    2**19*hJmpnCondValueBit[0] + lJmpnCondValue;
+    jmpnCondValue = 2**31*hJmpnCondValueBit[10] + 2**30*hJmpnCondValueBit[9] + 2**29*hJmpnCondValueBit[8] + 2**28*hJmpnCondValueBit[7] +
+                    2**27*hJmpnCondValueBit[6] + 2**26*hJmpnCondValueBit[5] + 2**25*hJmpnCondValueBit[4] + 2**24*hJmpnCondValueBit[3] +
+                    2**23*hJmpnCondValueBit[2] + 2**22*hJmpnCondValueBit[1] + 2**21*hJmpnCondValueBit[0] + lJmpnCondValue;
