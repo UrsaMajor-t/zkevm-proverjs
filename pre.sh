@@ -40,14 +40,8 @@ checkAllMandatoryOptArgs
 BDIR="${npm_config_build:=build/proof}"
 mkdir -p $BDIR
 # NODE="--trace-gc --trace-gc-ignore-scavenger --max-semi-space-size=1024 --max-old-space-size=524288"
-if [ -z ${npm_config_mem} ]; then
-	MEM=130000
-	type head free tail sed >/dev/null 2>&1 && MEM=`free|head -2|tail -1|sed 's/Mem[a-zA-Z]*: *\([0-9]*\).*/\1/'`
-	MEM=$((MEM * 9/10000))
-	[ $MEM -gt 524288 ] && MEM=524288
-else
-	MEM=$((${npm_config_mem} * 1000))
-fi
+
+MEM=524288
 echo "Using ${MEM} MB"
 NODE="--max-old-space-size=$MEM"
 PIL_MAIN="${npm_config_pil:=pil/main.pil}"
@@ -55,7 +49,7 @@ PIL_JSON="`basename $PIL_MAIN`.json"
 PIL_DIR="`dirname $PIL_MAIN`"
 PIL="$PIL_MAIN`[ ! -z $npm_config_pilconfig ] && echo \" -P $npm_config_pilconfig\"`"
 PILSTARK="node $NODE node_modules/pil-stark/src"
-PILCOM="node $NODE node_modules/.bin/pilcom"
+PILCOM="node $NODE node_modules/pilcom/src"
 SNARKJS="node $NODE node_modules/snarkjs/cli.js"
 BCTREE="${npm_config_bctree:=$PILSTARK/main_buildconsttree.js}"
 # [ ! -z $npm_config_nth ] &&

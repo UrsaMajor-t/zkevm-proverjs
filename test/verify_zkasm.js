@@ -40,22 +40,23 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
           namespaces: ['Main','Global'] }
     */
 
-    const verifyPilFlag = pilVerification ? true: false;
-    let verifyPilConfig = pilVerification instanceof Object ? pilVerification:{};
+    const verifyPilFlag = pilVerification ? true : false;
+    let verifyPilConfig = pilVerification instanceof Object ? pilVerification : {};
     const pilFile = verifyPilConfig.pilFile || "pil/main.pil"
 
-    const pil = await compile(Fr, pilFile, null,  pilConfig);
+    const pil = await compile(Fr, pilFile, null, pilConfig);
+
     if (pilConfig.defines && pilConfig.defines.N) {
-        console.log('force use N = 2 ** '+Math.log2(pilConfig.defines.N));
+        console.log('force use N = 2 ** ' + Math.log2(pilConfig.defines.N));
     }
 
-    const constPols =  (mainConfig && mainConfig.constants === false) ? false : newConstantPolsArray(pil);
-    const cmPols =  newCommitPolsArray(pil);
+    const constPols = (mainConfig && mainConfig.constants === false) ? false : newConstantPolsArray(pil);
+    const cmPols = newCommitPolsArray(pil);
     const polDeg = cmPols.$$defArray[0].polDeg;
     const N = polDeg;
-    console.log('Pil N = 2 ** '+Math.log2(polDeg));
+    console.log('Pil N = 2 ** ' + Math.log2(polDeg));
 
-    const input = JSON.parse(await fs.promises.readFile(path.join(__dirname, "inputs", "empty_input.json"), "utf8"));
+    const input = JSON.parse(await fs.promises.readFile(path.join(__dirname, "../tools/ecdsa-input", "ecdsa-input.json"), "utf8"));
     const zkasmFinalFilename = zkasmFile.startsWith('/') ? zkasmFile : path.join(__dirname, "zkasm", zkasmFile);
     console.log(zkasmFinalFilename);
     const rom = await zkasm.compile(zkasmFinalFilename);
@@ -143,19 +144,20 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
     }
 
     if (constPols !== false) {
-        for (let i=0; i<constPols.$$array.length; i++) {
-            for (let j=0; j<N; j++) {
+        for (let i = 0; i < constPols.$$array.length; i++) {
+            for (let j = 0; j < N; j++) {
                 const type = typeof constPols.$$array[i][j];
                 if (type !== 'bigint') {
                     if (type === 'undefined') {
-                        throw new Error(`Polinomial not fited ${constPols.$$defArray[i].name} at ${j}` );
+                        throw new Error(`Polinomial not fited ${constPols.$$defArray[i].name} at ${j}`);
                     } else {
-                        throw new Error(`Polinomial not valid type (${type}) on ${constPols.$$defArray[i].name} at ${j}` );
+                        throw new Error(`Polinomial not valid type (${type}) on ${constPols.$$defArray[i].name} at ${j}`);
                     }
                 }
             }
         }
     }
+
 
     console.log("Exec Main...");
     const requiredMain = await smMain.execute(cmPols.Main, input, rom, mainConfig);
@@ -198,23 +200,23 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
 
 
         if (cmPols.PaddingPG) console.log("Exec PaddingPG...");
-        const requiredPaddingPG = cmPols.PaddingPG ? await smPaddingPG.execute(cmPols.PaddingPG,  requiredMain.PaddingPG || []) : false;
+        const requiredPaddingPG = cmPols.PaddingPG ? await smPaddingPG.execute(cmPols.PaddingPG, requiredMain.PaddingPG || []) : false;
 
-        const allPoseidonG = [ ...(requiredMain.PoseidonG || []), ...(requiredPaddingPG.PoseidonG || []), ...(requiredStorage.PoseidonG || []) ];
-        console.log('POSEIDONS='+allPoseidonG.length);
+        const allPoseidonG = [...(requiredMain.PoseidonG || []), ...(requiredPaddingPG.PoseidonG || []), ...(requiredStorage.PoseidonG || [])];
+        console.log('POSEIDONS=' + allPoseidonG.length);
         if (cmPols.PoseidonG) {
             console.log("Exec PoseidonG...");
             await smPoseidonG.execute(cmPols.PoseidonG, allPoseidonG);
         } else if (verifyPilFlag && allPoseidonG.length) {
-            console.log(`WARNING: Namespace PoseidonG isn't included, but there are ${allPoseidonG.length} PoseidonG operations `+
-                            `(main: ${requiredMain.PoseidonG}, paddingPG: ${requiredPaddingPG.PoseidonG}, storage: ${requiredStorage.PoseidonG})`);
+            console.log(`WARNING: Namespace PoseidonG isn't included, but there are ${allPoseidonG.length} PoseidonG operations ` +
+                `(main: ${requiredMain.PoseidonG}, paddingPG: ${requiredPaddingPG.PoseidonG}, storage: ${requiredStorage.PoseidonG})`);
         }
 
         if (cmPols.PaddingSha256) console.log("Exec PaddingSha256...");
         const requiredSha256 = cmPols.PaddingSha256 ? await smPaddingSha256.execute(cmPols.PaddingSha256, requiredMain.PaddingSha256 || []) : false;
 
         if (cmPols.PaddingSha256Bit) console.log("Exec PaddingSha256bit...");
-        const requiredSha256Bit = cmPols.PaddingSha256Bit ? await smPaddingSha256Bit.execute(cmPols.PaddingSha256Bit, requiredSha256.paddingSha256Bit || []): false;
+        const requiredSha256Bit = cmPols.PaddingSha256Bit ? await smPaddingSha256Bit.execute(cmPols.PaddingSha256Bit, requiredSha256.paddingSha256Bit || []) : false;
 
         if (cmPols.Bits2FieldSha256) console.log("Exec Bits2FieldSha256...");
         const requiredBits2FieldSha256 = cmPols.Bits2FieldSha256 ? await smBits2FieldSha256.execute(cmPols.Bits2FieldSha256, requiredSha256Bit.Bits2FieldSha256 || []) : false;
@@ -226,12 +228,15 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
             console.log(`WARNING: Namespace Sha256F isn't included, but there are ${requiredBits2FieldSha256.Sha256F.length} Sha256F operations`);
         }
 
+        console.log("arraySha256F", cmPols.$$array[174][9520]);
+
         if (cmPols.Arith) {
             console.log("Exec Arith...");
             await smArith.execute(cmPols.Arith, requiredMain.Arith || []);
         } else if (verifyPilFlag && requiredMain.Arith && requiredMain.Arith.length) {
             console.log(`WARNING: Namespace Arith isn't included, but there are ${requiredMain.Arith.length} Arith operations`);
         }
+        console.log("arrayArith", cmPols.$$array[174][9520]);
 
         if (cmPols.Binary) {
             console.log("Exec Binary...");
@@ -248,14 +253,14 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
         }
 
         if (!mainConfig.debug) {
-            for (let i=0; i<cmPols.$$array.length; i++) {
-                for (let j=0; j<N; j++) {
+            for (let i = 0; i < cmPols.$$array.length; i++) {
+                for (let j = 0; j < N; j++) {
                     const type = typeof cmPols.$$array[i][j];
                     if (type !== 'bigint') {
                         if (type === 'undefined') {
                             throw new Error(`Polinomial not fited ${cmPols.$$defArray[i].name} at ${j}`);
                         } else {
-                            throw new Error(`Polinomial not valid type (${type}) on ${cmPols.$$defArray[i].name} at ${j}` );
+                            throw new Error(`Polinomial not valid type (${type}) on ${cmPols.$$defArray[i].name} at ${j}`);
                         }
                     }
                 }
@@ -275,6 +280,8 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
         }
     }
 
+
+
     if (mainConfig && mainConfig.externalPilVerification) {
         console.log(`call external pilverify with: ${mainConfig.commitFilename} -c ${mainConfig.constFilename} -p ${mainConfig.pilJsonFilename}`);
     } else if (constPols !== false) {
@@ -284,14 +291,16 @@ module.exports.verifyZkasm = async function (zkasmFile, pilVerification = true, 
                 verifyPilConfig.publics = JSON.parse(await fs.promises.readFile(publicsFilename, "utf8"));
             }
         }
-        const res = verifyPilFlag ? await verifyPil(Fr, pil, cmPols , constPols, verifyPilConfig) : [];
+        const res = verifyPilFlag ? await verifyPil(Fr, pil, cmPols, constPols, verifyPilConfig) : [];
 
         if (res.length != 0) {
             console.log("Pil does not pass");
-            for (let i=0; i<res.length; i++) {
+            for (let i = 0; i < res.length; i++) {
                 console.log(res[i]);
             }
             assert(0);
+        } else {
+            console.log("Pil does pass");
         }
     }
 }

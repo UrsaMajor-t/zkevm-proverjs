@@ -5,7 +5,7 @@ const version = require("../package").version;
 
 const exportPols = require("pilcom").exportPolynomials;
 const buildPoseidon = require("@0xpolygonhermez/zkevm-commonjs").getPoseidon;
-const { newCommitPolsArray, compile  } = require("pilcom");
+const { newCommitPolsArray, compile } = require("pilcom");
 
 
 const smArith = require("./sm/sm_arith/sm_arith.js");
@@ -59,14 +59,14 @@ async function run() {
     const poseidon = await buildPoseidon();
     const F = poseidon.F;
 
-    let config = typeof(argv.config) === "string" ? JSON.parse(fs.readFileSync(argv.config.trim())) : {};
+    let config = typeof (argv.config) === "string" ? JSON.parse(fs.readFileSync(argv.config.trim())) : {};
 
     if (argv._.length == 0) {
         console.log("You need to specify an input file");
         process.exit(1);
     } else if (argv._.length == 1) {
         config.inputFile = argv._[0];
-    } else  {
+    } else {
         console.log("Only one input file at a time is permitted");
         process.exit(1);
     }
@@ -76,11 +76,11 @@ async function run() {
     for (set of (argv.set ?? [])) {
         const index = set.indexOf('=');
         const name = index < 0 ? set : set.substr(0, index);
-        let value = index < 0 ? true : set.substr(index+1);
+        let value = index < 0 ? true : set.substr(index + 1);
         if (!isNaN(value)) {
             const numValue = parseInt(value);
             const bigValue = BigInt(value);
-            if ( bigValue === BigInt(numValue)) value = numValue;
+            if (bigValue === BigInt(numValue)) value = numValue;
             else value = BigInt(value);
         }
         config[name] = value;
@@ -106,7 +106,7 @@ async function run() {
         for (define of argv.define) {
             const index = define.indexOf('=');
             const name = index < 0 ? define : define.substr(0, index);
-            let value = index < 0 ? true : define.substr(index+1);
+            let value = index < 0 ? true : define.substr(index + 1);
 
             config.defines[name] = value;
         }
@@ -115,9 +115,9 @@ async function run() {
     config.stats = ((argv.stats === true || typeof argv.stats === 'string') ? true : (config.stats ?? false));
     config.stepsN = (typeof argv.stepsN !== 'undefined' ? argv.stepsN : (config.stepsN ?? undefined));
     config.cachePilFile = config.cachePilFile ?? path.join(__dirname, "../cache-main-pil.json");
-    config.databaseURL = typeof(argv.databaseurl) === "string" ?  argv.databaseurl.trim() : "local";
-    config.dbNodesTable = typeof(argv.dbnodestable) === "string" ?  argv.dbnodestable.trim() : "state.nodes";
-    config.dbProgramTable = typeof(argv.dbprogramtable) === "string" ?  argv.dbprogramtable.trim() : "state.program";
+    config.databaseURL = typeof (argv.databaseurl) === "string" ? argv.databaseurl.trim() : "local";
+    config.dbNodesTable = typeof (argv.dbnodestable) === "string" ? argv.dbnodestable.trim() : "state.nodes";
+    config.dbProgramTable = typeof (argv.dbprogramtable) === "string" ? argv.dbprogramtable.trim() : "state.program";
     config.assertOutputs = !(argv.assertOutputs === "false");
     for (let value of ['debug', 'unsigned', 'execute', 'tracer', 'counters', 'skip', 'verbose']) {
         config[value] = (argv[value] === true ? true : (config[value] ?? false));
@@ -128,13 +128,13 @@ async function run() {
 
     let pil;
     if (config.skip === true) {
-        if (fs.existsSync(config.cachePilFile )) {
-            pil = JSON.parse(await fs.promises.readFile(config.cachePilFile , "utf8"));
+        if (fs.existsSync(config.cachePilFile)) {
+            pil = JSON.parse(await fs.promises.readFile(config.cachePilFile, "utf8"));
         } else {
             throw new Error("Cache pil file does not exist");
         }
     } else {
-        console.log('compile PIL '+config.pilFile);
+        console.log('compile PIL ' + config.pilFile);
 
         const pilConfig = config.pilConfigFile ? JSON.parse(fs.readFileSync(config.pilConfigFile)) : {};
 
@@ -213,7 +213,7 @@ async function run() {
         const requiredKK = cmPols.PaddingKK ? await smPaddingKK.execute(cmPols.PaddingKK, requiredMain.PaddingKK || []) : false;
 
         if (cmPols.PaddingKKBit) console.log("PaddingKKbit...");
-        const requiredKKBit = cmPols.PaddingKKBit ? await smPaddingKKBit.execute(cmPols.PaddingKKBit, requiredKK.paddingKKBit || []): false;
+        const requiredKKBit = cmPols.PaddingKKBit ? await smPaddingKKBit.execute(cmPols.PaddingKKBit, requiredKK.paddingKKBit || []) : false;
 
         if (cmPols.Bits2Field) console.log("Bits2Field...");
         const requiredBits2Field = cmPols.Bits2Field ? await smBits2Field.execute(cmPols.Bits2Field, requiredKKBit.Bits2Field || []) : false;
@@ -227,7 +227,7 @@ async function run() {
         const requiredSha256 = cmPols.PaddingSha256 ? await smPaddingSha256.execute(cmPols.PaddingSha256, requiredMain.PaddingSha256 || []) : false;
 
         if (cmPols.PaddingSha256Bit) console.log("PaddingSha256bit...");
-        const requiredSha256Bit = cmPols.PaddingSha256Bit ? await smPaddingSha256Bit.execute(cmPols.PaddingSha256Bit, requiredSha256.paddingSha256Bit || []): false;
+        const requiredSha256Bit = cmPols.PaddingSha256Bit ? await smPaddingSha256Bit.execute(cmPols.PaddingSha256Bit, requiredSha256.paddingSha256Bit || []) : false;
 
         if (cmPols.Bits2FieldSha256) console.log("Bits2FieldSha256...");
         const requiredBits2FieldSha256 = cmPols.Bits2FieldSha256 ? await smBits2FieldSha256.execute(cmPols.Bits2FieldSha256, requiredSha256Bit.Bits2FieldSha256 || []) : false;
@@ -242,7 +242,7 @@ async function run() {
 
         if (cmPols.PoseidonG) {
             console.log("PoseidonG...");
-            const allPoseidonG = [ ...(requiredMain.PoseidonG || []), ...(requiredPaddingPG.PoseidonG || []), ...(requiredStorage.PoseidonG || []) ];
+            const allPoseidonG = [...(requiredMain.PoseidonG || []), ...(requiredPaddingPG.PoseidonG || []), ...(requiredStorage.PoseidonG || [])];
             await smPoseidonG.execute(cmPols.PoseidonG, allPoseidonG);
         }
 
@@ -251,10 +251,10 @@ async function run() {
             await smClimbKey.execute(cmPols.ClimbKey, requiredStorage.ClimbKey);
         }
 
-        for (let i=0; i<cmPols.$$array.length; i++) {
-            for (let j=0; j<N; j++) {
+        for (let i = 0; i < cmPols.$$array.length; i++) {
+            for (let j = 0; j < N; j++) {
                 if (typeof cmPols.$$array[i][j] === "undefined") {
-                    throw new Error(`Polynomial not fited ${cmPols.$$defArray[i].name} at ${j}` )
+                    throw new Error(`Polynomial not fited ${cmPols.$$defArray[i].name} at ${j}`)
                 }
             }
         }
@@ -272,7 +272,7 @@ async function run() {
 
         for (const zkPC of metadata.stats.trace) {
             const line = rom.program[zkPC];
-            const content = [w, zkPC, metadata.stats.lineTimes[zkPC] || 0,line.fileName, line.line, line.lineStr.trim()].join('|') + "\n";
+            const content = [w, zkPC, metadata.stats.lineTimes[zkPC] || 0, line.fileName, line.line, line.lineStr.trim()].join('|') + "\n";
             res = await output.write(content);
             ++w;
         }
@@ -287,7 +287,7 @@ async function run() {
     console.log("Executor finished correctly");
 }
 
-run().then(()=> {
+run().then(() => {
     process.exit(0);
 }, (err) => {
     console.log(err.message);

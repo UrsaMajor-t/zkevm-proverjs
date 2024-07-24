@@ -30,6 +30,9 @@
     "steps_proof": [
       "exec pilverify prove verify",
       "c12a_exec c12a_pilverify c12a_prove c12a_verify"
+    ],
+    "ecdsa_proof": [
+      "buildrom buildpil buildstoragerom buildconstants exec_ecdsa pilverify buildstarkinfo buildchelpers buildconstanttree prove verify"
     ]
   },
   "scripts": {
@@ -39,11 +42,13 @@
     "buildpiltoolfiles": "tools/build_all.sh ${npm_package_config_steps_piltoolfiles}",
     "buildsetup": "tools/build_all.sh ${npm_package_config_steps_setup}",
     "buildproof": "tools/build_all.sh ${npm_package_config_steps_proof}",
-    "buildrom": ". ./pre.sh && ROM_DIR=node_modules/@0xpolygonhermez/zkevm-rom && (cd $ROM_DIR && npm run build) && cp $ROM_DIR/build/rom.json $ROM_DIR/build/metadata-rom.txt $BDIR/",
+    "buildproofecdsa": "tools/build_all.sh ${npm_package_config_ecdsa_proof}",
+    "buildrom": ". ./pre.sh && ROM_DIR=../zkevm-rom && (cd $ROM_DIR && npm run build) && cp $ROM_DIR/build/rom.json $ROM_DIR/build/metadata-rom.txt $BDIR/",
     "buildstoragerom": ". ./pre.sh && ROM_DIR=node_modules/@0xpolygonhermez/zkevm-storage-rom && (cd $ROM_DIR && npm run build:rom) && cp $ROM_DIR/build/storage_sm_rom.json src/sm/sm_storage && cp src/sm/sm_storage/storage_sm_rom.json $BDIR/",
     "buildpil": ". ./pre.sh && mkdir -p $BDIR/pil/zkevm && node $NODE node_modules/.bin/pilcom $PIL -o $BDIR/pil/zkevm/$PIL_JSON -c $BDIR/pols_generated -n fork_1 && for PF in `tools/included_pils.sh $BDIR/pil/zkevm/$PIL_JSON`; do cp -v $PIL_DIR/$PF $BDIR/pil/zkevm/$PF; done",
     "buildconstants": ". ./pre.sh && node $NODE src/main_buildconstants -p $PIL -r $BDIR/rom.json -o $BDIR/zkevm.const",
     "exec": ". ./pre.sh && INPUT=${npm_config_input:=tools/build-genesis/input_executor.json} && echo \"input: $INPUT\" && node $NODE src/main_executor $INPUT -p $PIL -r $BDIR/rom.json -o $BDIR/zkevm$NTH.commit && cp $INPUT $BDIR/input_executor.json",
+    "exec_ecdsa": ". ./pre.sh && INPUT=${npm_config_input:=tools/ecdsa-input/ecdsa-input.json} && echo \"input: $INPUT\" && node $NODE src/main_executor $INPUT -p $PIL -r $BDIR/rom.json -o $BDIR/zkevm$NTH.commit && cp $INPUT $BDIR/input_executor.json",
     "pilverify": ". ./pre.sh && $PILCOM/main_pilverifier.js $BDIR/zkevm$NTH.commit -c $BDIR/zkevm.const -p $PIL",
     "buildstarkinfo": ". ./pre.sh && $PILSTARK/main_genstarkinfo.js -p $PIL -s $BDIR/zkevm.starkstruct.json -i $BDIR/zkevm.starkinfo.json",
     "buildchelpers": ". ./pre.sh && $PILSTARK/main_buildchelpers.js -m -p $PIL -s $BDIR/zkevm.starkinfo.json -c $BDIR/zkevm.chelpers/zkevm.chelpers.cpp -C ZkevmSteps -o",
@@ -91,11 +96,11 @@
     "fflonk_evk": ". ./pre.sh && $SNARKJS zkev $BDIR/final.fflonk.zkey $BDIR/final.fflonk.verkey.json",
     "fflonk_solidity": ". ./pre.sh && $SNARKJS zkesv $BDIR/final.fflonk.zkey $BDIR/final.fflonk.verifier.sol",
     "prefflonk_setup": ". ./pre.sh && [ -f build/powersOfTau28_hez_final.ptau ] || npm run downloadptaw",
-    "prebuildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t GL -p $PIL -s $BDIR/zkevm.starkstruct.json; else cp src/zkevm.starkstruct.json $BDIR; fi",
-    "prec12a_buildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t GL -p $BDIR/c12a.pil -s $BDIR/c12a.starkstruct.json; else cp src/zkevm.c12a.starkstruct.json $BDIR/c12a.starkstruct.json; fi",
+    "prebuildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t GL -p $PIL -s $BDIR/zkevm.starkstruct.json -q 128; else cp config/zkevm.starkstruct.json $BDIR; fi",
+    "prec12a_buildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t GL -p $BDIR/c12a.pil -s $BDIR/c12a.starkstruct.json  -q 64 -e 2; else cp config/zkevm.c12a.starkstruct.json $BDIR/c12a.starkstruct.json; fi",
     "buildarith": "node tools/arith/parse tools/arith/arith.ejs.pil -o pil/arith.pil && node tools/arith/arith_eq_gen tools/arith/arith.ejs.pil -o src/sm/sm_arith/sm_arith_##.js",
-    "prerecursive1_buildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t GL -p $BDIR/recursive1.pil -s $BDIR/recursive.starkstruct.json; else cp src/recursive.starkstruct.json $BDIR; fi",
-    "prerecursivef_buildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t BN128 -p $BDIR/recursivef.pil -s $BDIR/recursivef.starkstruct.json; else cp src/recursivef.starkstruct.json $BDIR; fi",
+    "prerecursive1_buildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t GL -p $BDIR/recursive1.pil -s $BDIR/recursive.starkstruct.json -q 43 -e 3; else cp config/recursive.starkstruct.json $BDIR; fi",
+    "prerecursivef_buildstarkinfo": ". ./pre.sh && if [ \"$npm_config_starkstruct\" = \"debug\" ]; then node tools/gen_debug_starkstruct.js -t BN128 -p $BDIR/recursivef.pil -s $BDIR/recursivef.starkstruct.json -q 32; else cp config/recursivef.starkstruct.json $BDIR; fi",
     "buildsetup:basic": "npm run buildsetup --pil=pil/basic_main.pil --build=build/basic_proof --starkstruct=debug",
     "buildall:basic": "npm run buildall --pil=pil/basic_main.pil --build=build/basic_proof --starkstruct=debug",
     "buildproof:basic": "npm run buildproof --pil=pil/basic_main.pil --build=build/basic_proof --starkstruct=debug",
@@ -104,7 +109,7 @@
     "test:arith": "mocha --max-old-space-size=25000 test/sm/sm_arith.js",
     "test:storage": "mocha test/sm/sm_storage/sm_storage_test.js",
     "test:mem_align": "mocha test/sm_mem_align_test.js",
-    "test:counters:arith": "mocha test/counters/arith.js",
+    "test:counters:arith": "mocha --max-old-space-size=502400  test/counters/arith.js",
     "test:counters:binary": "mocha test/counters/binary.js",
     "test:counters:keccak": "mocha test/counters/keccak.js",
     "test:counters:mem_align": "mocha test/counters/mem_align.js",

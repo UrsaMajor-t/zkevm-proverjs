@@ -26,7 +26,7 @@ const argv = require("yargs")
     .alias("E", "reserved")
     .argv;
 
-async function main(){
+async function main() {
     let Fr = new F1Field("0xFFFFFFFF00000001");
     let zkasmFile = false;
 
@@ -35,17 +35,17 @@ async function main(){
         process.exit(1);
     } else if (argv._.length == 1) {
         zkasmFile = argv._[0];
-    } else  {
+    } else {
         console.log("Only one source file at a time is permitted");
         process.exit(1);
     }
 
-    let ns = argv.ns ? argv.ns : ['Global', 'Main'];
+    let ns = argv.ns ? argv.ns : ['Global', 'Main', 'Mem', 'Storage', 'PoseidonG', 'Arith', 'Binary', 'ClimbKey', 'MemAlign'];
     let namespaceDefined = argv.ns ? true : false;
 
     // rows
-    const rowsDefined = typeof(argv.rows) !== 'undefined';
-    let rows = rowsDefined ?  argv.rows : 2**17;
+    const rowsDefined = typeof (argv.rows) !== 'undefined';
+    let rows = rowsDefined ? argv.rows : 2 ** 18;
     if (typeof rows === 'string' && rows.startsWith('2**')) {
         rows = 2 ** Number(rows.substring(3).trim());
     }
@@ -55,10 +55,11 @@ async function main(){
     }
 
     const verbose = argv.verbose ? true : false;
+    console.log("config verbose", verbose);
     const constants = argv.constants ? true : false;
     const debug = argv.debug ? true : false;
     const stats = argv.stats ? true : false;
-    let outputPath = typeof(argv.outputpath) === "string" ?  argv.outputpath.trim(): "";
+    let outputPath = typeof (argv.outputpath) === "string" ? argv.outputpath.trim() : "";
     const externalPilVerification = argv.externalpil ? true : (outputPath !== "");
 
     ns = Array.isArray(ns) ? ns : [ns];
@@ -68,14 +69,14 @@ async function main(){
         namespaces = namespaces.concat(name.trim().split(','));
     }
     if (namespaces.indexOf('Main') < 0) {
-        namespaces = ['Main',...namespaces];
+        namespaces = ['Main', ...namespaces];
     }
     if (namespaces.indexOf('Global') < 0) {
-        namespaces = ['Global',...namespaces];
+        namespaces = ['Global', ...namespaces];
     }
 
     let defaultPilConfig = {
-        defines: {N: rows},
+        defines: { N: rows },
         namespaces,
         verbose,
         color: true,
@@ -86,7 +87,7 @@ async function main(){
         constants,
         debug,
         debugInfo: {},
-        continueOnError: true,
+        continueOnError: false,
         externalPilVerification,
         stats
     }
@@ -106,11 +107,11 @@ async function main(){
         console.log(`Setting steps upto ${steps} vs rows upto ${rows} (debug: active)`);
     }
 
-    const pilFile = typeof(argv.pil) === "string" ?  argv.pil.trim() : (__dirname + "/../pil/main.pil");
-    let pilConfig = typeof(argv.pilconfig) === "string" ? JSON.parse(fs.readFileSync(argv.pilconfig.trim())) : defaultPilConfig;
-    let config = typeof(argv.config) === "string" ? JSON.parse(fs.readFileSync(argv.config.trim())) : defaultConfig;
+    const pilFile = typeof (argv.pil) === "string" ? argv.pil.trim() : (__dirname + "/../pil/main.pil");
+    let pilConfig = typeof (argv.pilconfig) === "string" ? JSON.parse(fs.readFileSync(argv.pilconfig.trim())) : defaultPilConfig;
+    let config = typeof (argv.config) === "string" ? JSON.parse(fs.readFileSync(argv.config.trim())) : defaultConfig;
     if (argv.reserved === true) {
-        config = {...config, reserved: true}
+        config = { ...config, reserved: true }
     }
 
     if (externalPilVerification && !outputPath) {
@@ -124,7 +125,8 @@ async function main(){
             constFilename: path.join(outputPath, zkasm + '.' + 'constFile.bin'),
             commitFilename: path.join(outputPath, zkasm + '.' + 'commitFile.bin'),
             pilJsonFilename: path.join(outputPath, zkasm + '.' + 'main.pil.json'),
-            ...config};
+            ...config
+        };
     }
 
     const fullPathZkasmFile = zkasmFile.startsWith('/') ? zkasmFile : path.join(cwd(), zkasmFile);
@@ -154,12 +156,13 @@ async function main(){
         console.log("Debug and constants options are incompatible");
         process.exit(1);
     }
-    
-    await verifyZkasm(fullPathZkasmFile, {pilFile}, pilConfig, config);
+
+
+    await verifyZkasm(fullPathZkasmFile, { pilFile }, pilConfig, config);
     console.log('Done!');
 }
 
-main().then(()=> {
+main().then(() => {
     process.exit(0);
 }, (err) => {
     console.log(err.message);

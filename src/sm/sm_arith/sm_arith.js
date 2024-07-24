@@ -1,4 +1,4 @@
-const {fea2scalar} = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
+const { fea2scalar } = require("@0xpolygonhermez/zkevm-commonjs").smtUtils;
 
 // all arith sources and tools on https://github.com/hermeznetwork/sm_arith.git
 
@@ -17,16 +17,17 @@ const arithEq10 = require('./sm_arith_eq10');
 
 const F1Field = require("ffjavascript").F1Field;
 
-module.exports.buildConstants = async function(pols) {
+module.exports.buildConstants = async function (pols) {
     const N = pols.SEL_BYTE2_BIT21.length;
-
     buildByte2Bits16(pols, N);
-    buildRange(pols, N, 'GL_SIGNED_22BITS', -(2n**22n), (2n**22n)-1n);
-    buildRangeSelector(pols.RANGE_SEL, N, 2 ** 16, [0xFFFF,0xFFFE,0xFFFD,0xFC2F,0xFC2E,
-                        0x3064,0x3063,0x4E72,0x4E71,0xE131,0xE130,0xA029,0xA028,0xB850,
-                        0xB84F,0x45B6,0x45B5,0x8181,0x8180,0x585D,0x585C,0x9781,0x9780,
-                        0x6A91,0x6A90,0x6871,0x6870,0xCA8D,0xCA8C,0x3C20,0x3C1F,0x8C16,
-                        0x8C15,0xD87C,0xD87B,0xFD47,0xFD46]);
+    const BITSN = BigInt(Math.log2(N)) - 1n;
+    console.log("GL_SIGNED_22BITS BITSN", BITSN);
+    buildRange(pols, N, 'GL_SIGNED_22BITS', -(2n ** BITSN), (2n ** BITSN) - 1n);
+    buildRangeSelector(pols.RANGE_SEL, N, 2 ** 16, [0xFFFF, 0xFFFE, 0xFFFD, 0xFC2F, 0xFC2E,
+        0x3064, 0x3063, 0x4E72, 0x4E71, 0xE131, 0xE130, 0xA029, 0xA028, 0xB850,
+        0xB84F, 0x45B6, 0x45B5, 0x8181, 0x8180, 0x585D, 0x585C, 0x9781, 0x9780,
+        0x6A91, 0x6A90, 0x6871, 0x6870, 0xCA8D, 0xCA8C, 0x3C20, 0x3C1F, 0x8C16,
+        0x8C15, 0xD87C, 0xD87B, 0xFD47, 0xFD46]);
 }
 
 function buildRangeSelector(pol, N, cycle, maxValues, paddingValue = 0n) {
@@ -42,21 +43,21 @@ function buildRangeSelector(pol, N, cycle, maxValues, paddingValue = 0n) {
             pol[i] = paddingValue;
             ++i;
         }
-        valueIndex = valueIndex < maxValues.length ? valueIndex + 1: 0;
+        valueIndex = valueIndex < maxValues.length ? valueIndex + 1 : 0;
     }
 }
 
 function buildByte2Bits16(pols, N) {
     let p = 0;
     // when SEL_BYTE2_BIT21 is zero, only values from 0 to (2**16)-1 are included
-    for (let i = 0; i < 2**16; ++i) {
+    for (let i = 0; i < 2 ** 16; ++i) {
         pols.SEL_BYTE2_BIT21[p] = 0n;
         pols.BYTE2_BIT21[p] = BigInt(i);
         ++p;
     }
 
     // when SEL_BYTE2_BIT21 is one, only values from 0 to (2**21)-1 are included
-    for (let i = 0; i < 2**21; ++i) {
+    for (let i = 0; i < 2 ** 21; ++i) {
         pols.SEL_BYTE2_BIT21[p] = 1n;
         pols.BYTE2_BIT21[p] = BigInt(i);
         ++p;
@@ -89,9 +90,11 @@ function buildRange(pols, N, name, fromValue, toValue, steps = 1) {
     }
 }
 
-module.exports.execute = async function(pols, input, continueOnError = false) {
+module.exports.execute = async function (pols, input, continueOnError = false) {
     // Get N from definitions
     const N = pols.x1[0].length;
+
+    console.log("arith N", N);
 
     // Field Elliptic Curve
     let pFec = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn;
@@ -107,8 +110,8 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
     // prepareInput256bits(input, N);
     inputFeaTo16bits(input, N, ['x1', 'y1', 'x2', 'y2', 'x3', 'y3']);
     let eqCalculates = [arithEq0.calculate, arithEq1.calculate, arithEq2.calculate, arithEq3.calculate, arithEq4.calculate,
-                        arithEq5.calculate, arithEq6.calculate, arithEq7.calculate, arithEq8.calculate, arithEq9.calculate,
-                        arithEq10.calculate];
+    arithEq5.calculate, arithEq6.calculate, arithEq7.calculate, arithEq8.calculate, arithEq9.calculate,
+    arithEq10.calculate];
 
     // Initialization
     for (let i = 0; i < N; i++) {
@@ -168,7 +171,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 }
                 pq0 = s * x2 - s * x1 - y2 + y1; // Worst values are {-2^256*(2^256-1),2^256*(2^256-1)}
             }
-            q0 = pq0/pFec;
+            q0 = pq0 / pFec;
             nDivErrors = errorHandler(
                 (pq0 - pFec * q0) != 0n,
                 `For input ${i}, with the calculated q0 the residual is not zero (diff point)`,
@@ -191,10 +194,10 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 s = Fec.div(Fec.mul(3n, Fec.mul(x1, x1)), Fec.add(y1, y1));
             }
             let pq0 = s * 2n * y1 - 3n * x1 * x1; // Worst values are {-3*(2^256-1)**2,2*(2^256-1)**2}
-                                                  // with |-3*(2^256-1)**2| > 2*(2^256-1)**2
-            q0 = -(pq0/pFec);
+            // with |-3*(2^256-1)**2| > 2*(2^256-1)**2
+            q0 = -(pq0 / pFec);
             nDivErrors = errorHandler(
-                (pq0 + pFec*q0) != 0n,
+                (pq0 + pFec * q0) != 0n,
                 `For input ${i}, with the calculated q0 the residual is not zero (same point)`,
                 continueOnError,
                 nDivErrors
@@ -215,10 +218,10 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
 
         if (input[i].selEq3) {
             let pq1 = s * s - x1 - x2 - x3; // Worst values are {-3*(2^256-1),(2^256-1)**2}
-                                            // with (2^256-1)**2 > |-3*(2^256-1)|
-            q1 = pq1/pFec;
+            // with (2^256-1)**2 > |-3*(2^256-1)|
+            q1 = pq1 / pFec;
             nDivErrors = errorHandler(
-                (pq1 - pFec*q1) != 0n,
+                (pq1 - pFec * q1) != 0n,
                 `For input ${i}, with the calculated q1 the residual is not zero (point addition)`,
                 continueOnError,
                 nDivErrors
@@ -236,10 +239,10 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 s = input[i]["s"];
             }
             let pq2 = s * x1 - s * x3 - y1 - y3; // Worst values are {-(2^256+1)*(2^256-1),(2^256-1)**2}
-                                                 // with |-(2^256+1)*(2^256-1)| > (2^256-1)**2
-            q2 = -(pq2/pFec);
+            // with |-(2^256+1)*(2^256-1)| > (2^256-1)**2
+            q2 = -(pq2 / pFec);
             nDivErrors = errorHandler(
-                (pq2 + pFec*q2) != 0n,
+                (pq2 + pFec * q2) != 0n,
                 `For input ${i}, with the calculated q2 the residual is not zero (point addition)`,
                 continueOnError,
                 nDivErrors
@@ -255,10 +258,10 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
         }
         else if (input[i].selEq4) {
             let pq1 = x1 * x2 - y1 * y2 - x3; // Worst values are {-2^256*(2^256-1),(2^256-1)**2}
-                                              // with |-2^256*(2^256-1)| > (2^256-1)**2
-            q1 = -(pq1/pBN254);
+            // with |-2^256*(2^256-1)| > (2^256-1)**2
+            q1 = -(pq1 / pBN254);
             nDivErrors = errorHandler(
-                (pq1 + pBN254*q1) != 0n,
+                (pq1 + pBN254 * q1) != 0n,
                 `For input ${i}, with the calculated q1 the residual is not zero (complex mul)`,
                 continueOnError,
                 nDivErrors
@@ -273,10 +276,10 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
             );
 
             let pq2 = y1 * x2 + x1 * y2 - y3; // Worst values are {-(2^256-1),2*(2^256-1)**2}
-                                              // with 2*(2^256-1)**2 > |-(2^256-1)|
-            q2 = pq2/pBN254;
+            // with 2*(2^256-1)**2 > |-(2^256-1)|
+            q2 = pq2 / pBN254;
             nDivErrors = errorHandler(
-                (pq2 - pBN254*q2) != 0n,
+                (pq2 - pBN254 * q2) != 0n,
                 `For input ${i}, with the calculated q2 the residual is not zero (complex mul)`,
                 continueOnError,
                 nDivErrors
@@ -292,10 +295,10 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
         }
         else if (input[i].selEq5) {
             let pq1 = x1 + x2 - x3; // Worst values are {-(2^256-1),2*(2^256-1)}
-                                    // with 2*(2^256-1) > |-(2^256-1)|
-            q1 = pq1/pBN254;
+            // with 2*(2^256-1) > |-(2^256-1)|
+            q1 = pq1 / pBN254;
             nDivErrors = errorHandler(
-                (pq1 - pBN254*q1) != 0n,
+                (pq1 - pBN254 * q1) != 0n,
                 `For input ${i}, with the calculated q1 the residual is not zero (complex add)`,
                 continueOnError,
                 nDivErrors
@@ -310,10 +313,10 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
             );
 
             let pq2 = y1 + y2 - y3; // Worst values are {-(2^256-1),2*(2^256-1)}
-                                    // with 2*(2^256-1) > |-(2^256-1)|
-            q2 = pq2/pBN254;
+            // with 2*(2^256-1) > |-(2^256-1)|
+            q2 = pq2 / pBN254;
             nDivErrors = errorHandler(
-                (pq2 - pBN254*q2) != 0n,
+                (pq2 - pBN254 * q2) != 0n,
                 `For input ${i}, with the calculated q2 the residual is not zero (complex add)`,
                 continueOnError,
                 nDivErrors
@@ -329,10 +332,10 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
         }
         else if (input[i].selEq6) {
             let pq1 = x1 - x2 - x3; // Worst values are {-2*(2^256-1),(2^256-1)}
-                                    // with |-2*(2^256-1)| > (2^256-1)
-            q1 = -(pq1/pBN254);
+            // with |-2*(2^256-1)| > (2^256-1)
+            q1 = -(pq1 / pBN254);
             nDivErrors = errorHandler(
-                (pq1 + pBN254*q1) != 0n,
+                (pq1 + pBN254 * q1) != 0n,
                 `For input ${i}, with the calculated q1 the residual is not zero (complex sub)`,
                 continueOnError,
                 nDivErrors
@@ -347,10 +350,10 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
             );
 
             let pq2 = y1 - y2 - y3; // Worst values are {-2*(2^256-1),(2^256-1)}
-                                    // with |-2*(2^256-1)| > (2^256-1)
-            q2 = -(pq2/pBN254);
+            // with |-2*(2^256-1)| > (2^256-1)
+            q2 = -(pq2 / pBN254);
             nDivErrors = errorHandler(
-                (pq2 + pBN254*q2) != 0n,
+                (pq2 + pBN254 * q2) != 0n,
                 `For input ${i}, with the calculated q2 the residual is not zero (complex sub)`,
                 continueOnError,
                 nDivErrors
@@ -380,10 +383,10 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
         throw new Error(`There are ${nDivErrors} divisions errors`);
     }
 
-    const chunksPrimeSecp256k1 = [ 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn,
-                            0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFEn, 0xFFFFn, 0xFC2Fn ];
-    const chunksPrimeBN254     = [ 0x3064n, 0x4E72n, 0xE131n, 0xA029n, 0xB850n, 0x45B6n, 0x8181n, 0x585Dn,
-                            0x9781n, 0x6A91n, 0x6871n, 0xCA8Dn, 0x3C20n, 0x8C16n, 0xD87Cn, 0xFD47n ];
+    const chunksPrimeSecp256k1 = [0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn,
+        0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFFn, 0xFFFEn, 0xFFFFn, 0xFC2Fn];
+    const chunksPrimeBN254 = [0x3064n, 0x4E72n, 0xE131n, 0xA029n, 0xB850n, 0x45B6n, 0x8181n, 0x585Dn,
+        0x9781n, 0x6A91n, 0x6871n, 0xCA8Dn, 0x3C20n, 0x8C16n, 0xD87Cn, 0xFD47n];
     for (let i = 0; i < input.length; i++) {
         let offset = i * 32;
         let xAreDifferent = false;
@@ -402,7 +405,7 @@ module.exports.execute = async function(pols, input, continueOnError = false) {
                 pols.y2[j][index] = BigInt(input[i]["_y2"][j])
                 pols.x3[j][index] = BigInt(input[i]["_x3"][j])
                 pols.y3[j][index] = BigInt(input[i]["_y3"][j])
-                pols.s[j][index]  = BigInt(input[i]["_s"][j])
+                pols.s[j][index] = BigInt(input[i]["_s"][j])
                 pols.q0[j][index] = BigInt(input[i]["_q0"][j])
                 pols.q1[j][index] = BigInt(input[i]["_q1"][j])
                 pols.q2[j][index] = BigInt(input[i]["_q2"][j])
@@ -490,16 +493,16 @@ function errorHandler(condition, message, continueOnError, counter) {
 function inputFeaTo16bits(input, N, names) {
     for (let i = 0; i < input.length; i++) {
         for (const name of names) {
-            input[i]['_'+name] = splitFeaTo16bits(input[i][name]);
+            input[i]['_' + name] = splitFeaTo16bits(input[i][name]);
         }
     }
 }
 
 function splitFeaTo16bits(chunks) {
     let res = [];
-    for(const chunk of chunks) {
-        res.push(chunk % 2n**16n);
-        res.push((chunk / 2n**16n) >> 0n);
+    for (const chunk of chunks) {
+        res.push(chunk % 2n ** 16n);
+        res.push((chunk / 2n ** 16n) >> 0n);
     }
     return res;
 }
