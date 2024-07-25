@@ -1,0 +1,1 @@
+node --max-old-space-size=524200 test/zkasmtest.js ../zkevm-rom/main/main.zkasm -p ./pil/main_21.pil -C -R 2**21
